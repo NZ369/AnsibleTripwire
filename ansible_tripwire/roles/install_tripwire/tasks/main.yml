@@ -1,0 +1,85 @@
+# Role for installing Tripwire on Ubuntu systems
+---
+
+- name: Update apt repo and cache on all Debian / Ubuntu servers
+  apt:
+    update_cache: yes
+    force_apt_get: yes
+    cache_valid_time: 3600
+
+- name: Install Tripwire
+  ansible.builtin.apt:
+    name: tripwire
+    state: present
+
+- name: Install dependency python
+  ansible.builtin.apt:
+    name: python3
+    state: present
+
+- name: Install dependency python pip
+  ansible.builtin.apt:
+    name: python3-pip
+    state: present
+
+- name: Install dependency python pexpect
+  pip:
+    name: pexpect
+  become: yes
+
+- name: Change Tripwire config reporting level from 3 to 4
+  ansible.builtin.lineinfile:
+    path: /etc/tripwire/twcfg.txt
+    regexp: '^REPORTLEVEL'
+    line: REPORTLEVEL   =4
+
+- name: Generate a Tripwire site key file
+  ansible.builtin.expect:
+    command: twadmin --generate-keys --site-keyfile /etc/tripwire/site.key
+    responses:
+      (.*)Y/N(.*): "Y"
+      Enter the site keyfile passphrase: "{{ sitekey_pass }}"
+      Verify the site keyfile passphrase: "{{ sitekey_pass }}"
+  become: yes
+
+- name: Generate a Tripwire local key file
+  ansible.builtin.expect:
+    command: "twadmin --generate-keys --local-keyfile /etc/tripwire/{{ ansible_hostname }}-local.key"
+    responses:
+      (.*)Y/N(.*): "Y"
+      Enter the local keyfile passphrase: "{{ localkey_pass }}"
+      Verify the local keyfile passphrase: "{{ localkey_pass }}"
+  become: yes
+
+- name: Generate configuration file for Tripwire
+  ansible.builtin.expect:
+    command: twadmin --create-cfgfile -S /etc/tripwire/site.key /etc/tripwire/twcfg.txt
+    responses:
+      (.*)passphrase(.*): "{{ sitekey_pass }}"
+  become: yes
+
+- name: Replace current Tripwire policy file with custom policy file
+  ansible.builtin.copy:
+    src: "{{ path_to_custom_policy_file }}"
+    dest: /etc/tripwire/twpol.txt
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  when: custom_policy
+
+- name: Generate encrypted Tripwire policy file
+  ansible.builtin.expect:
+    command: twadmin --create-polfile /etc/tripwire/twpol.txt
+    responses:
+      Please enter your site passphrase: "{{ sitekey_pass }}"
+  become: yes
+
+- name: Initialize Tripwire database
+  ansible.builtin.expect:
+    command: tripwire --init
+    responses:
+      Please enter your local passphrase: "{{ localkey_pass }}"
+    timeout: 500
+  become: yes
+  ignore_errors: true

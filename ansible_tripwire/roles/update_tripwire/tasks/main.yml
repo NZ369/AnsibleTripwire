@@ -1,0 +1,44 @@
+# Role for updating Tripwire on Ubuntu systems
+---
+
+- name: Replace current Tripwire policy file with custom policy file
+  ansible.builtin.copy:
+    src: "{{ path_to_custom_policy_file }}"
+    dest: /etc/tripwire/twpol.txt
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  when: custom_policy
+
+- name: Generate encrypted Tripwire policy file
+  ansible.builtin.expect:
+    command: twadmin --create-polfile /etc/tripwire/twpol.txt
+    responses:
+      Please enter your site passphrase: "{{ sitekey_pass }}"
+  become: yes
+
+- name: Find previous databases
+  ansible.builtin.find:
+    paths: /var/lib/tripwire
+    patterns: (.*).twd
+    use_regex: true
+  register: out
+
+- name: Remove previous Tripwire database file
+  ansible.builtin.file:
+    path: /var/lib/tripwire/
+    state: absent
+  with_items: "{{ out.files }}"
+  loop_control:
+    label: /var/lib/tripwire/
+  become: yes
+
+- name: Reinitialize Tripwire database
+  ansible.builtin.expect:
+    command: tripwire --init
+    responses:
+      Please enter your local passphrase: "{{ localkey_pass }}"
+    timeout: 500
+  become: yes
+  ignore_errors: true

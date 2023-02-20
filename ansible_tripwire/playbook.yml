@@ -1,0 +1,16 @@
+---
+# Ansible playbook for installing or updating Tripwire software on Ubuntu systems
+- name: Configuring Tripwire on Linux Ubuntu Systems 
+  hosts: all
+  become: yes
+  roles:
+    # Uncomment only one role for use, install_tripwire XOR update_tripwire
+    - install_tripwire
+   #- update_tripwire 
+  vars:
+    # These variables work and are required for both roles.
+    - sitekey_pass: "tw@ansible@dt" # This is the Tripwire sitekey password
+    - localkey_pass: "localkey_tripwire" # This is the Tripwire localkey password
+    - custom_policy: False # Set to True if a custom policy file already exists and is inside ./roles/install_tripwire/files, for role update_tripwire this must be set to True and the policy file should be located in path value for path_to_custom_policy_file
+    - path_to_custom_policy_file: "/home/zhangy/ansible_tripwire/roles/update_tripwire/files/twpol.txt" # If custom_policy == True then specify where this custom policy file is located on the local machine, it should be a .txt file.  See existing twpol.txt in default path directory for reference.  Remember to change this path for update_tripwire role, current path directs to policy file stored in role install_tripwire/files/.  
+

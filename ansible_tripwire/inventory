@@ -1,0 +1,7 @@
+lab_node_2 ansible_host=142.135.24.163  ansible_connection=ssh ansible_user=zhangy ansible_ssh_pass=Up2NoGood=D
+
+lab_node_3 ansible_host=142.135.25.4 ansible_connection=ssh ansible_user=zhangy ansible_ssh_pass=Up2NoGood=D
+
+[lab_test_nodes]
+lab_node_2
+lab_node_3
