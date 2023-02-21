@@ -33,6 +33,12 @@
     regexp: '^REPORTLEVEL'
     line: REPORTLEVEL   =4
 
+- name: Tripwire mailing configuration
+  ansible.builtin.lineinfile:
+    path: /etc/tripwire/twcfg.txt
+    regexp: 'MAILNOVIOLATIONS'
+    line: "MAILNOVIOLATIONS ={{ MAILNOVIOLATIONS }}"
+
 - name: Generate a Tripwire site key file
   ansible.builtin.expect:
     command: twadmin --generate-keys --site-keyfile /etc/tripwire/site.key
@@ -82,4 +88,4 @@
       Please enter your local passphrase: "{{ localkey_pass }}"
     timeout: 500
   become: yes
-  ignore_errors: true
+  ignore_errors: true  

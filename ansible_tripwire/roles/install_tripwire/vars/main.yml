@@ -1,2 +1,10 @@
 ---
 # vars file for install_tripwire
+#
+# For Tripwire configuration file
+#
+# If MAILNOVIOLATIONS =true Tripwire will send out an email everytime an integrity check is run.
+# If MAILNOVIOLATIONS =false Tripwire will send out an email only if there is a violation.
+#
+MAILNOVIOLATIONS: false
+
